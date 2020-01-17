@@ -8,6 +8,9 @@ $(async function () {
   const $ownStories = $("#my-articles");
   const $navLogin = $("#nav-login");
   const $navLogOut = $("#nav-logout");
+  const $favouriteArticles = $("#favorited-articles");
+  const favStar = "fas fa-star star";
+  const unfavStar = "far fa-star star";
 
   // global storyList variable
   let storyList = null;
@@ -89,6 +92,13 @@ $(async function () {
     $allStoriesList.show();
   });
 
+  //Event handler for Navigation to Favorites
+  $("body").on("click", "#favorites", async function() {
+    hideElements();
+    generateFavs();
+    $favouriteArticles.show();
+  })
+
   $("#navbar").on("click", "#submit", function () {
     $submitForm.hide();
     $submitForm.slideDown();
@@ -155,6 +165,27 @@ $(async function () {
     showNavForLoggedInUser();
   }
 
+  //making our fav stars working
+
+  $("body").on("click", ".star", async function(event) {
+    console.log("current-user", currentUser.favorites);
+    let $target = $(event.target);
+    let storyId = $target.parent().attr("id")
+    if (currentUser) {
+      $target.toggleClass(favStar);
+      $target.toggleClass(unfavStar);
+      if ($target.hasClass(favStar)) {
+        await currentUser.addFavourite(storyId, currentUser.username, currentUser.loginToken);
+      } else {
+        console.log("toggle success");
+       currentUser.removeFavourite(storyId, currentUser.username, currentUser.loginToken);
+      }
+    }
+
+  });
+
+
+
   /**
    * A rendering function to call the StoryList.getStories static method,
    *  which will generate a storyListInstance. Then render it.
@@ -175,19 +206,38 @@ $(async function () {
     }
   }
 
+  function generateFavs() {
+
+    const arrayOfFav = currentUser.favorites;
+    // empty out that part of the page
+    $favouriteArticles.empty();
+
+    // loop through all of our favorites and generate HTML for them
+    for (let story of arrayOfFav) {
+      const result = generateStoryHTML(story);
+      $favouriteArticles.append(result);
+    }
+  }
+
   /**
    * A function to render HTML for an individual Story instance
    */
 
   function generateStoryHTML(story) {
     let hostName = getHostName(story.url);
-
+    let favOrNot = "far"
+    for (let i = 0; i < currentUser.favorites.length; i++) {
+      let objOfStories = currentUser.favorites[i];
+      if (objOfStories.storyId === story.storyId) {
+        favOrNot = "fas";
+        break;
+      }
+    }
     // render story markup
     const storyMarkup = $(`
       <li id="${story.storyId}">
-        <a class="article-link" href="${story.url}" target="a_blank">
-          <strong>${story.title}</strong>
-        </a>
+        <i class="${favOrNot} fa-star star"></i><a class="article-link" href="${story.url}" target="a_blank">
+          <strong>${story.title}</strong></a>
         <small class="article-author">by ${story.author}</small>
         <small class="article-hostname ${hostName}">(${hostName})</small>
         <small class="article-username">posted by ${story.username}</small>

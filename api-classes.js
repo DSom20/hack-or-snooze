@@ -47,7 +47,7 @@ class StoryList {
     // this function should return the newly created story so it can be used in
     // the script.js file where it will be appended to the DOM
     let token = user.loginToken;
-    
+
     const response = await axios.post(`${BASE_URL}/stories`, {
         token,
         story : newStory
@@ -56,7 +56,7 @@ class StoryList {
         accept: "application/json"
       }
     });
-    
+
     let storyInstance = new Story(response.data.story);
     return storyInstance;
   }
@@ -79,6 +79,29 @@ class User {
     this.loginToken = "";
     this.favorites = [];
     this.ownStories = [];
+
+  }
+
+  async addFavourite(storyId, userName, token) {
+    const favoriteStory = await axios.get(`${BASE_URL}/stories/${storyId}`);
+    await axios.post(`${BASE_URL}/users/${userName}/favorites/${storyId}`,
+    { token });
+    let storyInstance = new Story(favoriteStory.data.story);
+    this.favorites.push(storyInstance);
+  }
+
+  async removeFavourite(storyId, userName, token) {
+    await axios.delete(`${BASE_URL}/users/${userName}/favorites/${storyId}`,
+    { data: {
+      token,
+    }
+    });
+    let favourites = this.favorites;
+    for (let i = 0; i < favourites.length; i++) {
+      if (favourites[i].storyId === storyId) {
+        favourites.splice(i, 1);
+      }
+    }
   }
 
   /* Create and return a new user.

@@ -157,6 +157,14 @@ form > hr {
   color: crimson;
 }
 
+.star {
+  color: gold;
+}
+
+.favorite {
+  
+}
+
 .pencil:hover {
   color: darkblue;
 }
