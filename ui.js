@@ -8,9 +8,10 @@ $(async function () {
   const $ownStories = $("#my-articles");
   const $navLogin = $("#nav-login");
   const $navLogOut = $("#nav-logout");
+  const $navMyStories = $("#my-stories");
   const $favouriteArticles = $("#favorited-articles");
-  const favStar = "fas fa-star star";
-  const unfavStar = "far fa-star star";
+  const FAVSTAR = "fas fa-star star";
+  const UNFAVSTAR = "far fa-star star";
 
   // global storyList variable
   let storyList = null;
@@ -104,6 +105,11 @@ $(async function () {
     $submitForm.slideDown();
   })
 
+  $("body").on("click", "#my-stories", function() {
+    hideElements();
+    $ownStories.show();
+  })
+
   $submitForm.on("submit", async function (e) {
     e.preventDefault();
     let story = {
@@ -114,8 +120,11 @@ $(async function () {
 
     if (currentUser) {
       let storyInstance = await StoryList.addStory(currentUser, story);
-      const result = generateStoryHTML(storyInstance);
-      $allStoriesList.prepend(result);
+      // await currentUser.addOwnStory(storyInstance, currentUser.loginToken);
+      const mainListItem = generateStoryHTML(storyInstance, false);
+      const ownListItem = generateStoryHTML(storyInstance, true);
+      $allStoriesList.prepend(mainListItem);
+      $ownStories.append(ownListItem);
     }
 
     $submitForm.slideToggle();
@@ -159,6 +168,7 @@ $(async function () {
     $createAccountForm.trigger("reset");
 
     // show the stories
+    generateStories();
     $allStoriesList.show();
 
     // update the navigation bar
@@ -168,17 +178,19 @@ $(async function () {
   //making our fav stars working
 
   $("body").on("click", ".star", async function(event) {
-    console.log("current-user", currentUser.favorites);
+    // console.log("current-user", currentUser.favorites);
     let $target = $(event.target);
     let storyId = $target.parent().attr("id")
     if (currentUser) {
-      $target.toggleClass(favStar);
-      $target.toggleClass(unfavStar);
-      if ($target.hasClass(favStar)) {
+      // $target.toggleClass(FAVSTAR);
+      // $target.toggleClass(UNFAVSTAR);
+      if ($target.hasClass(UNFAVSTAR)) {
         await currentUser.addFavourite(storyId, currentUser.username, currentUser.loginToken);
+        // console.log("addFav event listern Response", response);
+        $target.toggleClass(`${FAVSTAR} ${UNFAVSTAR}`);
       } else {
-        console.log("toggle success");
-       currentUser.removeFavourite(storyId, currentUser.username, currentUser.loginToken);
+        await currentUser.removeFavourite(storyId, currentUser.username, currentUser.loginToken);
+        $target.toggleClass(`${FAVSTAR} ${UNFAVSTAR}`);
       }
     }
 
@@ -223,25 +235,30 @@ $(async function () {
    * A function to render HTML for an individual Story instance
    */
 
-  function generateStoryHTML(story) {
+  function generateStoryHTML(story, ownList) {
     let hostName = getHostName(story.url);
-    let favOrNot = "far"
-    for (let i = 0; i < currentUser.favorites.length; i++) {
-      let objOfStories = currentUser.favorites[i];
-      if (objOfStories.storyId === story.storyId) {
-        favOrNot = "fas";
-        break;
+    let favOrNot = UNFAVSTAR;
+    if(currentUser) {
+      for (let i = 0; i < currentUser.favorites.length; i++) {
+        let objOfStories = currentUser.favorites[i];
+        if (objOfStories.storyId === story.storyId) {
+          favOrNot = FAVSTAR;
+          break;
+        }
       }
     }
+
     // render story markup
     const storyMarkup = $(`
       <li id="${story.storyId}">
-        <i class="${favOrNot} fa-star star"></i><a class="article-link" href="${story.url}" target="a_blank">
+        <i class="${favOrNot} fa-star star"></i>
+        ${ownList ? '<i class="fas fa-trash-alt"></i>' : ""}
+        <a class="article-link" href="${story.url}" target="a_blank">
           <strong>${story.title}</strong></a>
         <small class="article-author">by ${story.author}</small>
         <small class="article-hostname ${hostName}">(${hostName})</small>
         <small class="article-username">posted by ${story.username}</small>
-      </li>
+        </li>
     `);
 
     return storyMarkup;
@@ -254,6 +271,7 @@ $(async function () {
       $submitForm,
       $allStoriesList,
       $filteredArticles,
+      $favouriteArticles,
       $ownStories,
       $loginForm,
       $createAccountForm

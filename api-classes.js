@@ -83,10 +83,12 @@ class User {
   }
 
   async addFavourite(storyId, userName, token) {
-    const favoriteStory = await axios.get(`${BASE_URL}/stories/${storyId}`);
-    await axios.post(`${BASE_URL}/users/${userName}/favorites/${storyId}`,
+    // const favoriteStory = await axios.get(`${BASE_URL}/stories/${storyId}`);
+    const response = await axios.post(`${BASE_URL}/users/${userName}/favorites/${storyId}`,
     { token });
-    let storyInstance = new Story(favoriteStory.data.story);
+    const favoriteList = response.data.user.favorites;
+    const favoriteStory = favoriteList[favoriteList.length - 1];
+    let storyInstance = new Story(favoriteStory);
     this.favorites.push(storyInstance);
   }
 
@@ -96,12 +98,39 @@ class User {
       token,
     }
     });
+
     let favourites = this.favorites;
-    for (let i = 0; i < favourites.length; i++) {
-      if (favourites[i].storyId === storyId) {
-        favourites.splice(i, 1);
-      }
-    }
+
+    let updatedFavs = favourites.filter(element => {
+      return element.storyId !== storyId;
+    });
+
+    this.favorites = updatedFavs;
+  }
+
+  async addOwnStory(story, token) {
+    let storyResponse = await axios.get(`${BASE_URL}/stories/${story.storyId}`);
+    let storyObject = storyResponse.data.story;
+    console.log(this.ownStories);
+    this.ownStories.push(storyObject);
+    console.log(this.ownStories);
+    let response = await axios.patch(`${BASE_URL}/users/${this.username}`, {
+        token,
+        user: {
+          stories: [
+            {
+              author: "",
+              createdAt: "",
+              storyId: "",
+              title: "",
+              updatedAt: "",
+              url: "",
+              username: ""
+            }
+          ],
+        }
+    })
+    console.log(response);
   }
 
   /* Create and return a new user.
