@@ -8,7 +8,6 @@ $(async function () {
   const $ownStories = $("#my-articles");
   const $navLogin = $("#nav-login");
   const $navLogOut = $("#nav-logout");
-  const $navMyStories = $("#my-stories");
   const $favouriteArticles = $("#favorited-articles");
   const FAVSTAR = "fas fa-star star";
   const UNFAVSTAR = "far fa-star star";
@@ -107,6 +106,7 @@ $(async function () {
 
   $("body").on("click", "#my-stories", function() {
     hideElements();
+    generateOwnStory();
     $ownStories.show();
   })
 
@@ -120,7 +120,7 @@ $(async function () {
 
     if (currentUser) {
       let storyInstance = await StoryList.addStory(currentUser, story);
-      // await currentUser.addOwnStory(storyInstance, currentUser.loginToken);
+      currentUser.ownStories.push(storyInstance);
       const mainListItem = generateStoryHTML(storyInstance, false);
       const ownListItem = generateStoryHTML(storyInstance, true);
       $allStoriesList.prepend(mainListItem);
@@ -151,6 +151,8 @@ $(async function () {
 
     if (currentUser) {
       showNavForLoggedInUser();
+    } else {
+      $(".login-user-tabs").hide();
     }
   }
 
@@ -196,6 +198,16 @@ $(async function () {
 
   });
 
+  $("body").on("click", ".trash-can", async function(event) {
+    let $target = $(event.target);
+    let storyId = $target.parent().attr("id");
+
+    if (currentUser) {
+      await currentUser.removeOwnStory(storyId, currentUser.loginToken);
+      $target.parent().remove();
+    }
+  })
+
 
 
   /**
@@ -231,6 +243,19 @@ $(async function () {
     }
   }
 
+  function generateOwnStory() {
+    const arrayOfOwnStories = currentUser.ownStories;
+    // empty out that part of the page
+    $ownStories.empty();
+
+    // loop through all of our favorites and generate HTML for them
+    for (let story of arrayOfOwnStories) {
+      const result = generateStoryHTML(story, true);
+      $ownStories.append(result);
+    }
+
+  }
+
   /**
    * A function to render HTML for an individual Story instance
    */
@@ -252,7 +277,7 @@ $(async function () {
     const storyMarkup = $(`
       <li id="${story.storyId}">
         <i class="${favOrNot} fa-star star"></i>
-        ${ownList ? '<i class="fas fa-trash-alt"></i>' : ""}
+        ${ownList ? '<i class="fas fa-trash-alt trash-can"></i>' : ""}
         <a class="article-link" href="${story.url}" target="a_blank">
           <strong>${story.title}</strong></a>
         <small class="article-author">by ${story.author}</small>
@@ -280,8 +305,10 @@ $(async function () {
   }
 
   function showNavForLoggedInUser() {
+    $("#nav-user-profile").text(currentUser.username);
     $navLogin.hide();
-    $navLogOut.show();
+    $(".login-user-tabs").show()
+    $("#nav-welcome").show();
   }
 
   /* simple function to pull the hostname from a URL */

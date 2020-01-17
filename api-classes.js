@@ -108,6 +108,24 @@ class User {
     this.favorites = updatedFavs;
   }
 
+  async removeOwnStory(storyId, token) {
+    await axios.delete(`${BASE_URL}/stories/${storyId}`, {
+      data: {
+        token,
+      }
+    });
+
+    let ownStories = this.ownStories;
+    console.log(ownStories);
+    let updatedStories = ownStories.filter(element => {
+      return element.storyId !== storyId;
+    });
+
+    this.ownStories = updatedStories;
+  }
+
+
+
   async addOwnStory(story, token) {
     let storyResponse = await axios.get(`${BASE_URL}/stories/${story.storyId}`);
     let storyObject = storyResponse.data.story;
