@@ -244,12 +244,11 @@ $(async function () {
   }
 
   function generateOwnStory() {
-    const arrayOfOwnStories = currentUser.ownStories;
     // empty out that part of the page
     $ownStories.empty();
 
     // loop through all of our favorites and generate HTML for them
-    for (let story of arrayOfOwnStories) {
+    for (let story of currentUser.ownStories) {
       const result = generateStoryHTML(story, true);
       $ownStories.append(result);
     }
@@ -264,13 +263,9 @@ $(async function () {
     let hostName = getHostName(story.url);
     let favOrNot = UNFAVSTAR;
     if(currentUser) {
-      for (let i = 0; i < currentUser.favorites.length; i++) {
-        let objOfStories = currentUser.favorites[i];
-        if (objOfStories.storyId === story.storyId) {
-          favOrNot = FAVSTAR;
-          break;
-        }
-      }
+      if(currentUser.favorites.find(storyIdEle => storyIdEle.storyId === story.storyId)) {
+        favOrNot = FAVSTAR;
+      };
     }
 
     // render story markup

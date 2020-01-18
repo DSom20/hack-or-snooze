@@ -93,19 +93,16 @@ class User {
   }
 
   async removeFavourite(storyId, userName, token) {
-    await axios.delete(`${BASE_URL}/users/${userName}/favorites/${storyId}`,
-    { data: {
-      token,
-    }
+
+    await axios.delete(`${BASE_URL}/users/${userName}/favorites/${storyId}`, {
+      data: {
+        token,
+      }
     });
 
-    let favourites = this.favorites;
-
-    let updatedFavs = favourites.filter(element => {
+    this.favorites = this.favorites.filter(element => {
       return element.storyId !== storyId;
     });
-
-    this.favorites = updatedFavs;
   }
 
   async removeOwnStory(storyId, token) {
@@ -115,13 +112,13 @@ class User {
       }
     });
 
-    let ownStories = this.ownStories;
-    console.log(ownStories);
-    let updatedStories = ownStories.filter(element => {
+    this.ownStories = this.ownStories.filter(element => {
       return element.storyId !== storyId;
     });
 
-    this.ownStories = updatedStories;
+    this.favorites = this.favorites.filter(element => {
+      return element.storyId !== storyId;
+    });
   }
 
 
